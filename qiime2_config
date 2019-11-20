@@ -1,4 +1,4 @@
 project_name="dani_16S"
-mapping_file="/home/vkclab/danielle/16S/mappingfiles/test_data_mapping"
-classifier="/home/vkclab/danielle/16S/classifiers/classifier_silva_132_99_16S_V4.V5_515F_926R.qza"
-data="/home/vkclab/danielle/16S/raw_data/test_data"
+mapping_file="/Users/danielle/Documents/thesis/16S/qiime2/mappingfiles/test_data_mapping.csv"
+classifier="/Users/danielle/Documents/thesis/16S/qiime2/classifiers/classifier_silva_132_99_16S_V4.V5_515F_926R.qza"
+data="/Users/danielle/Documents/thesis/16S/qiime2/test_data"

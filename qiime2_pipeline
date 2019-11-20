@@ -1,17 +1,25 @@
 #!/bin/bash
+# exit when any command fails
+set -e
 
-. /home/vkclab/danielle/16S/qiime2_pipeline/qiime2_config
+. /Users/danielle/bin/qiime2_config
 
-echo $project_name
+# echo "$project_name"
 mkdir qiime_outputs
 cd qiime_outputs
 
 mkdir reads_qza
+# qiime tools import --type SampleData[PairedEndSequencesWithQuality] \
+#                    --input-path /Users/danielle/Documents/thesis/16S/qiime2/test_data \
+#                    --output-path reads_qza/reads.qza \
+#                    --input-format CasavaOneEightSingleLanePerSampleDirFmt
 
+# ultimately change this to echo "$data"
+####### how to fix this ###########
 qiime tools import --type SampleData[PairedEndSequencesWithQuality] \
-                   --input-path $data \
-                   --output-path reads_qza/reads.qza \
-                   --input-format CasavaOneEightSingleLanePerSampleDirFmt
+                    --input-path /Users/danielle/Documents/thesis/16S/qiime2/test_data \
+                    --output-path reads_qza/reads.qza \
+                    --input-format CasavaOneEightSingleLanePerSampleDirFmt
 
 qiime cutadapt trim-paired --i-demultiplexed-sequences reads_qza/reads.qza \
                     --p-cores 4 \
@@ -23,19 +31,25 @@ qiime cutadapt trim-paired --i-demultiplexed-sequences reads_qza/reads.qza \
 # Then, demultiplex these samples to allow us to connect the barcode
 # associated with each run to the sample that it came from
 
+# !mkdir reads_qza_subsample
 # from qiime2.plugins.demux.methods import subsample_paired
-# qiime demux subsample-paired --i-sequences reads_qza/reads.trimmed.qza\
+# qiime demux subsample-paired --i-sequences reads_qza/reads_trimmed.qza\
 #                             --p-fraction 0.01\
 #                             --output-dir reads_qza_subsample
 
 # "Denoising" is the process of correcting or removing noisy reads
+# exports denoising_stats.qza, table.qza, representative_sequences.qza
+# gives information on how many reads were retained at each step of the DADA2 pipeline
 qiime dada2 denoise-paired --i-demultiplexed-seqs reads_qza/reads_trimmed.qza \
                            --p-trunc-len-f 270 \
                            --p-trunc-len-r 210 \
                            --p-n-threads 4 \
                            --output-dir dada2_output
 
-qiime tools export dada2_output/denoising_stats.qza --output-dir dada2_output
+# convert stats QZA to tsv
+qiime tools export --input-path dada2_output/denoising_stats.qza \
+                --output-path dada2_output/denoising
+
 
 qiime feature-table summarize --i-table dada2_output/table.qza --o-visualization dada2_output/table_summary.qzv
 
@@ -49,6 +63,13 @@ qiime feature-table filter-seqs --i-data dada2_output/representative_sequences.q
                                 --o-filtered-data dada2_output/rep_seqs_filt.qza
 
 qiime feature-table summarize --i-table dada2_output/table_filt.qza --o-visualization dada2_output/table_filt_summary.qzv
+
+qiime tools export --input-path dada2_output/table_filt_summary.qzv \
+                --output-path dada2_output/filt_summary
+
+# finding p-max-depth to make rarefaction tree
+head dada2_output/filt_summary/sample-frequency-detail.csv
+pmax=34917
 
 ########### Build quick phylogeny with FastTree
 # make multiple-sequence alignment using MAFFT
@@ -77,8 +98,20 @@ qiime phylogeny fasttree --i-alignment tree_out/rep_seqs_filt_aligned_masked.qza
 qiime phylogeny midpoint-root --i-tree tree_out/rep_seqs_filt_aligned_masked_tree.qza \
                               --o-rooted-tree tree_out/rep_seqs_filt_aligned_masked_tree_rooted.qz
 
-Generate rarefaction curves A key quality control step is to plot rarefaction curves for all of your samples to determine if you performed sufficient sequencing. The below command will generate these plots (X is a placeholder for the maximum depth in your dataset, which you can determine by running the summarize command above).
-## remember to change x -- p-max-depth
+# Generate rarefaction curves
+# A key quality control step is to plot rarefaction curves for all of your samples to determine if you performed sufficient sequencing.
+# The below command will generate these plots (X is a placeholder for the maximum depth in your dataset).
+
+# set p-max-depth to variable
+
+                                  34917
+qiime diversity alpha-rarefaction --i-table dada2_output/table_filt.qza \
+                                --p-max-depth 34917 \
+                                --p-steps 20 \
+                                --i-phylogeny tree_out/rep_seqs_filt_aligned_masked_tree_rooted.qz.qza \
+                                --o-visualization rarefaction_curves_eachsample.qzv
+
+# extract p-max-depth by extracting table_filt_summary.qzv
 
 qiime diversity alpha-rarefaction \
     --i-table dada2_output/table_filt.qza \
@@ -97,9 +130,10 @@ qiime diversity alpha-rarefaction \
 # filename below is for the V6/V8 B969F-BA1406R region. The regions that we have
 # trained classifiers for are:
 
+# add back classifier variable
 qiime feature-classifier classify-sklearn --i-reads dada2_output/rep_seqs_filt.qza \
-                                          --i-classifier $classifier \
-                                          --p-n-jobs 4 \
+                                          --i-classifier /Users/danielle/Documents/thesis/16S/qiime2/classifiers/classifier_silva_132_99_16S_V4.V5_515F_926R.qza \
+                                          --p-n-jobs -2 \
                                           --output-dir taxa
 
 qiime tools export taxa/classification.qza --output-dir taxa
@@ -110,7 +144,7 @@ qiime tools export taxa/classification.qza --output-dir taxa
 qiime taxa barplot --i-table dada2_output/table_filt.qza \
                    --i-taxonomy taxa/classification.qza \
                     --o-visualization taxa/taxa_barplot.qzv\
-                   --m-metadata-file "$mapping_file"
+                   --m-metadata-file /Users/danielle/Documents/thesis/16S/qiime2/mappingfiles/test_data_mapping.csv
 
 # Calculating diversity metrics and generating ordination plots Common alpha and
 # beta-diversity metrics can be calculated with a single command in QIIME2. In
