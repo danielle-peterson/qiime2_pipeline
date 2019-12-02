@@ -104,7 +104,7 @@ qiime phylogeny midpoint-root --i-tree tree_out/rep_seqs_filt_aligned_masked_tre
 
 # set p-max-depth to variable
 
-                                  34917
+
 qiime diversity alpha-rarefaction --i-table dada2_output/table_filt.qza \
                                 --p-max-depth 34917 \
                                 --p-steps 20 \
@@ -113,13 +113,14 @@ qiime diversity alpha-rarefaction --i-table dada2_output/table_filt.qza \
 
 # extract p-max-depth by extracting table_filt_summary.qzv
 
-qiime diversity alpha-rarefaction \
-    --i-table dada2_output/table_filt.qza \
-    --p-max-depth 12000  \
-    --p-steps 20 \
-    --i-phylogeny tree_out/rep_seqs_filt_aligned_masked_tree_rooted.qza \
-    --m-metadata-file $mapping_file \
-    --o-visualization rarefaction_curves.qzv
+# rarefaction curve with metadata
+# qiime diversity alpha-rarefaction \
+#     --i-table dada2_output/table_filt.qza \
+#     --p-max-depth 12000  \
+#     --p-steps 20 \
+#     --i-phylogeny tree_out/rep_seqs_filt_aligned_masked_tree_rooted.qza \
+#     --m-metadata-file $mapping_file \
+#     --o-visualization rarefaction_curves.qzv
 
 #### Assign taxonomy
 # You can assign taxonomy to your ASVs using a Naive-Bayes approach implemented
@@ -132,11 +133,11 @@ qiime diversity alpha-rarefaction \
 
 # add back classifier variable
 qiime feature-classifier classify-sklearn --i-reads dada2_output/rep_seqs_filt.qza \
-                                          --i-classifier /Users/danielle/Documents/thesis/16S/qiime2/classifiers/classifier_silva_132_99_16S_V4.V5_515F_926R.qza \
+                                          --i-classifier /Users/danielle/Documents/thesis/16S/qiime2/classifiers/silva-132-99-nb-classifier_pretrained.qza \
                                           --p-n-jobs -2 \
                                           --output-dir taxa
 
-qiime tools export taxa/classification.qza --output-dir taxa
+qiime tools export --input-path taxa/classification.qza --output-path taxa
 
 # A more useful output is the interactive stacked bar-charts of the taxonomic
 # abundances across samples, which can be output with this command:
@@ -144,7 +145,7 @@ qiime tools export taxa/classification.qza --output-dir taxa
 qiime taxa barplot --i-table dada2_output/table_filt.qza \
                    --i-taxonomy taxa/classification.qza \
                     --o-visualization taxa/taxa_barplot.qzv\
-                   --m-metadata-file /Users/danielle/Documents/thesis/16S/qiime2/mappingfiles/test_data_mapping.csv
+                   --m-metadata-file /Users/danielle/Documents/thesis/16S/qiime2/mappingfiles/test_map.tsv
 
 # Calculating diversity metrics and generating ordination plots Common alpha and
 # beta-diversity metrics can be calculated with a single command in QIIME2. In
@@ -155,10 +156,10 @@ qiime taxa barplot --i-table dada2_output/table_filt.qza \
 # this cut-off will be excluded).
 
 qiime diversity core-metrics-phylogenetic --i-table dada2_output/table_filt.qza \
-                                          --i-phylogeny tree_out/rep_seqs_filt_aligned_masked_tree_rooted.qza \
-                                          --p-sampling-depth 5000 \
-                                          --m-metadata-file $mapping_file \
-                                          --p-n-jobs 4 \
+                                          --i-phylogeny tree_out/rep_seqs_filt_aligned_masked_tree_rooted.qz.qza \
+                                          --p-sampling-depth 34917 \
+                                         --m-metadata-file /Users/danielle/Documents/thesis/16S/qiime2/mappingfiles/test_map.tsv \
+                                          --p-n-jobs 2 \
                                           --output-dir diversity
 
 # Identifying differentially abundant features with ANCOM ANCOM is one method to
@@ -170,10 +171,10 @@ qiime diversity core-metrics-phylogenetic --i-table dada2_output/table_filt.qza 
 qiime composition add-pseudocount --i-table dada2_output/table_filt.qza \
                                   --o-composition-table dada2_output/table_filt_pseudocount.qza
 
-qiime composition ancom --i-table dada2_output/table_filt_pseudocount.qza \
-                      --m-metadata-file $mapping_file \
-                      --m-metadata-column 'Method' \
-                      --output-dir ancom_output
+# qiime composition ancom --i-table dada2_output/table_filt_pseudocount.qza \
+#                       --m-metadata-file $mapping_file \
+#                       --m-metadata-column 'Method' \
+#                       --output-dir ancom_output
 
-qiime tools export dada2_output/table_filt.qza --output-dir dada2_output_exported
-qiime tools export dada2_output/rep_seqs_filt.qza --output-dir dada2_output_exported
+# qiime tools export dada2_output/table_filt.qza --output-dir dada2_output_exported
+# qiime tools export dada2_output/rep_seqs_filt.qza --output-dir dada2_output_exported
