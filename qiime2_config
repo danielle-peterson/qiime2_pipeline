@@ -1,5 +1,5 @@
 Q2_PROJECT="My Project"
 Q2_OUT=qiime2_output
 Q2_MAPPING="metadata.csv"
-Q2_CLASSIFIER="classifiers/classifier_silva_132_99_16S_V4.V5_515F_926R.qza"
+Q2_CLASSIFIER="classifiers/silva-132-99-nb-classifier_pretrained.qza"
 Q2_IN="test_data"

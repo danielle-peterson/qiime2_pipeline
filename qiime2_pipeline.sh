@@ -13,7 +13,7 @@ set -e
 # TODO: Don't hard code
 . qiime2_config
 
-echo $PROJECT_NAME
+echo $Q2_PROJECT
 mkdir -p $Q2_OUT/reads_qza
 
 # ultimately change this to echo "$data"
@@ -76,11 +76,8 @@ qiime tools export \
 ## Log
 head $Q2_OUT/dada2_output/filt_summary/sample-frequency-detail.csv
 
-# TODO: Fix hard-coded pmax - max number of reads to use, take lowest from files?
-PMAX=34917
-
-########### Build quick phylogeny with FastTree
-# make multiple-sequence alignment using MAFFT
+########## Build quick phylogeny with FastTree
+make multiple-sequence alignment using MAFFT
 
 mkdir -p $Q2_OUT/tree_out
 
@@ -114,7 +111,9 @@ qiime phylogeny midpoint-root \
 # A key quality control step is to plot rarefaction curves for all of your samples to determine if you performed sufficient sequencing.
 # The below command will generate these plots (X is a placeholder for the maximum depth in your dataset).
 
-# TODO: set p-max-depth to variable
+# TODO: Fix hard-coded pmax - max number of reads to use, take lowest from files?
+PMAX=$(cut -d, -f2 qiime2_output/dada2_output/filt_summary/sample-frequency-detail.csv | sort -n | head -1 | sed -E 's/^([0-9]+)\..+/\1/')
+echo $PMAX
 
 qiime diversity alpha-rarefaction \
     --i-table $Q2_OUT/dada2_output/table_filt.qza \
@@ -146,7 +145,7 @@ qiime diversity alpha-rarefaction \
 # add back classifier variable
 qiime feature-classifier classify-sklearn \
     --i-reads $Q2_OUT/dada2_output/rep_seqs_filt.qza \
-    --i-classifier $Q2_CLASSIFIER/silva-132-99-nb-classifier_pretrained.qza \
+    --i-classifier $Q2_CLASSIFIER \
     --p-n-jobs -2 \
     --output-dir taxa
 
