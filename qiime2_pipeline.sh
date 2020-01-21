@@ -77,7 +77,7 @@ qiime tools export \
 head $Q2_OUT/dada2_output/filt_summary/sample-frequency-detail.csv
 
 ########## Build quick phylogeny with FastTree
-make multiple-sequence alignment using MAFFT
+# make multiple-sequence alignment using MAFFT
 
 mkdir -p $Q2_OUT/tree_out
 
